@@ -1,273 +1,148 @@
-# WordPress Plugin Build Tools
+# BUILD ガイド（wp-gmail-plugin）
 
-WP Gmail Pluginを配布可能なZIPファイルに変換するためのビルドツール集です。
+このドキュメントは、WordPress 向けプラグイン「wp-gmail-plugin」をローカルで開発し、配布用にビルド（ZIP 化）してリリースするまでの手順をまとめたものです。
 
-## 🛠️ 利用可能なビルドツール
+## 1) 前提条件
 
-### 1. PowerShell版（推奨）
-**ファイル**: `build-plugin.ps1`
+- PHP 7.4+（推奨: 8.x）
+- WordPress 6.x（ローカル実行環境）
+- Git（任意: バージョン管理とタグ付け）
+- ZIP ユーティリティ（`zip` コマンド or OS の圧縮機能）
+- 任意: WP-CLI（`wp` コマンド）
+- 任意: Composer（サードパーティ PHP ライブラリを使う場合）
 
-最も高機能で、詳細な設定とエラーハンドリングを提供します。
+> 備考: 本プラグインが追加ツール（npm, composer 等）に依存している場合は、プロジェクトルートの `README.md` や `composer.json` も参照してください。
 
-#### 使用方法
-```powershell
-# 基本的なビルド
-.\build-plugin.ps1
-
-# バージョン指定
-.\build-plugin.ps1 -Version "1.2.0"
-
-# 詳細出力
-.\build-plugin.ps1 -Version "1.2.0" -Verbose
-
-# テストスキップ
-.\build-plugin.ps1 -SkipTests
-
-# 出力ディレクトリ指定
-.\build-plugin.ps1 -OutputDir "release"
-```
-
-#### 機能
-- ✅ PHP構文チェック
-- ✅ ファイル検証
-- ✅ バージョン自動更新
-- ✅ CSS/JS最適化
-- ✅ 詳細ログ
-- ✅ エラーハンドリング
-- ✅ インストール情報生成
-
-### 2. バッチファイル版
-**ファイル**: `build-plugin.bat`
-
-Windowsで手軽に使える簡易版です。
-
-#### 使用方法
-```cmd
-# ダブルクリックで実行
-build-plugin.bat
-```
-
-#### 機能
-- ✅ ファイルコピー
-- ✅ ZIP作成
-- ✅ 基本的なクリーンアップ
-
-### 3. Node.js版（高機能）
-**ファイル**: `build-tool.js` + `package.json`
-
-最も柔軟で拡張可能なビルドツールです。
-
-#### セットアップ
-```bash
-# 依存関係をインストール
-npm install
-```
-
-#### 使用方法
-```bash
-# 基本ビルド
-npm run build
-
-# 開発版ビルド
-npm run build:dev
-
-# 本番版ビルド（最適化あり）
-npm run build:prod
-
-# パッケージング
-npm run package
-
-# バリデーションのみ
-npm run validate
-
-# バージョンアップ
-npm run version:patch  # 1.0.0 → 1.0.1
-npm run version:minor  # 1.0.0 → 1.1.0
-npm run version:major  # 1.0.0 → 2.0.0
-
-# カスタムオプション
-node build-tool.js --version 1.5.0 --optimize --verbose
-```
-
-#### 機能
-- ✅ 高度なファイル管理
-- ✅ CSS/JS最適化
-- ✅ 詳細なバリデーション
-- ✅ 柔軟な設定オプション
-- ✅ カラー出力
-- ✅ 進捗表示
-- ✅ エラー詳細
-
-## 📦 ビルド結果
-
-すべてのツールは以下の構造でファイルを生成します：
-
-```
-dist/
-├── wp-gmail-plugin-v1.0.0.zip    # インストール用ZIPファイル
-├── install-info.json             # インストール情報
-└── build.log                     # ビルドログ（Verbose時）
-```
-
-## 🎯 ZIPファイルの内容
-
-生成されるZIPファイルには以下が含まれます：
+## 2) ディレクトリ構成（例）
 
 ```
 wp-gmail-plugin/
-├── wp-gmail-plugin.php           # メインプラグインファイル
-├── README.md                     # ドキュメント
-├── uninstall.php                 # アンインストール処理
-├── includes/                     # PHPクラス
-│   ├── class-gmail-api-client.php
-│   ├── class-gmail-oauth.php
-│   ├── class-gmail-email-manager.php
-│   └── functions.php
-├── templates/                    # テンプレートファイル
-│   ├── admin-main.php
-│   ├── admin-settings.php
-│   ├── admin-compose.php
-│   ├── admin-inbox.php
-│   ├── shortcode-compose.php
-│   └── shortcode-inbox.php
-├── assets/                       # CSS/JS
-│   ├── css/
-│   │   ├── style.css
-│   │   └── admin-style.css
-│   └── js/
-│       ├── script.js
-│       └── admin-script.js
-└── languages/                    # 翻訳ファイル
-    └── wp-gmail-plugin.pot
+├─ wp-gmail-plugin.php         # メインプラグインファイル（ヘッダにバージョン）
+├─ readme.txt                  # WordPress.org 互換の readme（任意）
+├─ includes/                   # PHP 機能モジュール
+├─ assets/                     # 画像・CSS・JS など
+├─ languages/                  # 翻訳ファイル（.pot/.po/.mo）
+└─ BUILD.md                    # 本ドキュメント
 ```
 
-## 🚀 WordPressへのインストール方法
+実際の構成はプロジェクトに合わせて読み替えてください。
 
-1. **ZIPファイルをダウンロード**
-   - `dist/wp-gmail-plugin-v1.0.0.zip`をダウンロード
+## 3) ローカル開発
 
-2. **WordPressにアップロード**
-   - WordPress管理画面 → プラグイン → 新規追加
-   - 「プラグインのアップロード」をクリック
-   - ZIPファイルを選択して「今すぐインストール」
+- 既存の WordPress 環境がある場合:
+  - `wp-content/plugins/` に本プラグインディレクトリ（`wp-gmail-plugin/`）を配置
+  - 管理画面 > プラグイン で「有効化」
+- Docker で新規に用意する場合（例）:
+  - 任意の WordPress 用 Compose テンプレートを使うか、`wordpress`/`mariadb` 公式イメージで環境を起動
+  - プロジェクトフォルダを `wp-content/plugins` にマウント
 
-3. **プラグインを有効化**
-   - インストール完了後「プラグインを有効化」をクリック
+### Gmail/Google API の設定（概要）
 
-4. **設定を完了**
-   - Gmail → 設定 でAPI認証情報を設定
+- Google Cloud Console で「OAuth 2.0 クライアント ID」を作成
+- 対象 API として Gmail API を有効化
+- スコープは必要最小限（例: `https://www.googleapis.com/auth/gmail.send` など）
+- 認可リダイレクト URI は、プラグインのコールバック URL に合わせて登録
+- 発行された `Client ID` と `Client Secret` を本プラグインの設定画面または `.env` で管理
 
-## ⚙️ ビルド設定のカスタマイズ
+> セキュリティ: 認証情報は `.env` や WP 設定に保存し、Git にコミットしないでください。
 
-### PowerShell版の設定
-`build-plugin.ps1`の上部で設定を変更できます：
+`.env` の例（必要な場合）:
 
-```powershell
-$PluginName = "wp-gmail-plugin"
-$PluginMainFile = "wp-gmail-plugin.php"
-$BuildDir = Join-Path $PSScriptRoot $OutputDir
+```
+GOOGLE_CLIENT_ID="xxxxxxxxxx.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="xxxxxxxxxxxxxxxxxxxxxx"
+GOOGLE_REDIRECT_URI="https://example.com/wp-admin/admin.php?page=wp-gmail-plugin-callback"
 ```
 
-### Node.js版の設定
-`build-tool.js`の`CONFIG`オブジェクトで設定を変更できます：
+## 4) コーディング規約・品質（任意）
 
-```javascript
-const CONFIG = {
-    pluginName: 'wp-gmail-plugin',
-    pluginMainFile: 'wp-gmail-plugin.php',
-    outputDir: 'dist',
-    excludePatterns: [
-        '*.log',
-        '*.tmp',
-        // 追加の除外パターン
-    ]
-};
+- PHP_CodeSniffer + WordPress Coding Standards を推奨
+- `composer.json` にスクリプトがある場合:
+
+```
+composer install
+composer run lint
+composer run fix
 ```
 
-## 🔍 トラブルシューティング
+- Lint/Format の導入がまだの場合は、開発ポリシーに従って追加を検討
 
-### よくある問題
+## 5) バージョン更新
 
-#### 1. PowerShell実行ポリシーエラー
-```powershell
-# 実行ポリシーを一時的に変更
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+- 配布前に、以下を同一の新バージョンへ更新
+  - メインプラグインファイル（例: `wp-gmail-plugin.php`）のヘッダ `Version`
+  - `readme.txt` の `Stable tag`（運用している場合）
+  - 変更点を `CHANGELOG` または `readme.txt` に追記
 
-# または、バイパスして実行
-powershell -ExecutionPolicy Bypass -File .\build-plugin.ps1
-```
+## 6) 配布用 ZIP の作成（ビルド）
 
-#### 2. PHP構文エラー
-- PHPがインストールされているか確認
-- `php -v`でバージョンを確認
-- `-SkipTests`オプションでスキップ可能
+最小構成では、ソースをそのまま ZIP 化します。開発用ファイル（`.git`, `node_modules`, `tests`, `.*` など）は含めないでください。
 
-#### 3. Node.js依存関係エラー
+### 6.1 Bash の例（macOS/Linux/WSL）
+
 ```bash
-# キャッシュクリア
-npm cache clean --force
-
-# 再インストール
-rm -rf node_modules package-lock.json
-npm install
+# 作業ディレクトリの一つ上で実行する例
+cd ..
+zip -r "wp-gmail-plugin.zip" "wp-gmail-plugin" \
+  -x "*.git*" \
+  -x "*/node_modules/*" \
+  -x "*/vendor/*" \
+  -x "*.DS_Store" \
+  -x "*/.vscode/*" \
+  -x "*/.idea/*" \
+  -x "*/tests/*" \
+  -x "*/.env*"
 ```
 
-#### 4. ファイルアクセスエラー
-- 管理者権限で実行
-- アンチウイルスソフトの除外設定
-- ファイルが使用中でないか確認
+### 6.2 PowerShell の例（Windows）
 
-## 📋 チェックリスト
-
-ビルド前に以下を確認してください：
-
-- [ ] 必須ファイルが存在する
-- [ ] PHP構文エラーがない
-- [ ] バージョン番号が正しい
-- [ ] 不要なファイルが含まれていない
-- [ ] 設定ファイルが適切
-
-## 🔄 継続的インテグレーション
-
-### GitHub Actionsの例
-```yaml
-name: Build Plugin
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - run: npm install
-      - run: npm run build:prod
-      - uses: actions/upload-artifact@v3
-        with:
-          name: plugin-zip
-          path: dist/*.zip
+```powershell
+# 作業ディレクトリの一つ上で実行する例
+Set-Location ..
+$src = "wp-gmail-plugin"
+$dst = "wp-gmail-plugin.zip"
+$exclude = @(
+  "**/.git*","**/node_modules/*","**/vendor/*",
+  "**/.vscode/*","**/.idea/*","**/tests/*","**/.env*","**/.DS_Store"
+)
+if (Test-Path $dst) { Remove-Item $dst }
+Compress-Archive -Path $src -DestinationPath $dst -CompressionLevel Optimal -Force -Exclude $exclude
 ```
 
-## 📝 ログとデバッグ
+> Composer を使う場合は `composer install --no-dev` を実行してから ZIP に含めるとよいです（`vendor/` を含める）。
 
-### PowerShell版
-- `-Verbose`フラグで詳細ログ
-- `dist/build.log`にログファイル生成
+## 7) 動作確認チェックリスト
 
-### Node.js版
-- `--verbose`オプションで詳細出力
-- カラー出力で見やすい表示
+- プラグインを新規インストールして有効化できる
+- 設定画面で Google 認証が完了する
+- 期待どおりに Gmail 送信/取得などのコア機能が動作する
+- ログ/エラーが出ていない（`wp-content/debug.log` など）
+- 翻訳・表記・アクセシビリティに問題がない
 
-## 🤝 貢献
+## 8) リリース手順（例）
 
-ビルドツールの改善提案やバグ報告は、GitHubのIssuesまでお願いします。
+1. 変更点を最終確認（ローカルで動作確認）
+2. バージョン更新（プラグインヘッダ、readme 等）
+3. ZIP を作成（上記手順）
+4. Git にタグ付け（例: `v1.2.3`）
+5. 配布: 
+   - 自社サイト配布なら ZIP を配布ページへアップロード
+   - WordPress.org へ公開する場合は SVN リポジトリにコミット
+6. リリース後に本番サイトで最終動作確認
 
-## 📄 ライセンス
+## 9) トラブルシュート
 
-このビルドツールはプラグイン本体と同じGPL v2以降のライセンスで配布されています。
+- 「Google で承認エラー」: リダイレクト URI とスコープを再確認。テストユーザー制限が有効な場合は対象アカウントを追加。
+- 「メール送信が失敗」: PHP エラーログ、HTTP リクエストログ、リフレッシュトークンの有効性を確認。スコープに `gmail.send` が含まれているか確認。
+- 「ZIP が大きすぎる」: `node_modules/` やテスト資材、不要なアセットを除外して再作成。
+
+## 10) よくある追加タスク（任意）
+
+- WP-CLI コマンドの追加（バッチ送信・再認証など）
+- 自動テスト（Unit/E2E）と CI での ZIP 生成
+- 翻訳ファイル（`.pot`）の生成と更新
+- セキュリティレビュー（Nonce, Capability, エスケープ/サニタイズの徹底）
+
+---
+
+本ドキュメントはテンプレート的な内容を含みます。プロジェクトに合わせてコマンド・手順・除外パターンを調整してください。必要であれば、あなたの運用に合わせてさらに具体化します。
