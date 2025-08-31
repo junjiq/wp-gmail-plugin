@@ -67,6 +67,19 @@ final class WPGP_Plugin {
         $mk = isset($in['log_max_size_kb']) ? intval($in['log_max_size_kb']) : $o['log_max_size_kb'];
         $out['log_max_size_kb'] = ($mk>=32&&$mk<=10240)?$mk:1024;
         $out['notify_admin'] = !empty($in['notify_admin']);
+
+        // 接続検証（対象キーが変わった場合のみ）
+        $keys = ['gmail_user','gmail_pass','encryption','port'];
+        $changed = false; foreach ($keys as $k) { if ((string)$out[$k] !== (string)$o[$k]) { $changed = true; break; } }
+        if ($changed && $out['gmail_user'] && $out['gmail_pass']) {
+            $err = '';
+            if (!$this->validate_smtp($out, $err)) {
+                add_settings_error('wpgp_settings_group', 'wpgp_validate_error', 'Gmail 接続検証に失敗しました: ' . esc_html($err), 'error');
+                set_transient('wpgp_reset_fields', 1, MINUTE_IN_SECONDS * 5);
+                // 変更破棄
+                return $o;
+            }
+        }
         return $out;
     }
     public function render_settings() {
@@ -87,6 +100,10 @@ final class WPGP_Plugin {
         <div class="wrap">
             <h1>WP Gmail Mailer 設定</h1>
             <p>WordPress のメール送信を Gmail SMTP によって置き換えます。Gmail API は使用しません。</p>
+            <?php settings_errors('wpgp_settings_group'); ?>
+            <?php if (get_transient('wpgp_reset_fields')): delete_transient('wpgp_reset_fields'); $o['gmail_user']=''; $o['from_email']=''; ?>
+                <div class="notice notice-warning"><p>認証に失敗したため、入力をリセットしました。正しい情報を再入力してください。</p></div>
+            <?php endif; ?>
             <?php echo $test; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
             <form method="post" action="options.php">
                 <?php settings_fields('wpgp_settings_group'); $o=$this->opts(); ?>
@@ -207,6 +224,31 @@ final class WPGP_Plugin {
     }
 
     // ===== Helpers =====
+    private function validate_smtp($opt, &$err='') {
+        try {
+            if (!class_exists('PHPMailer\\PHPMailer\\PHPMailer')) {
+                require_once ABSPATH.WPINC.'/PHPMailer/PHPMailer.php';
+                require_once ABSPATH.WPINC.'/PHPMailer/SMTP.php';
+                require_once ABSPATH.WPINC.'/PHPMailer/Exception.php';
+            }
+            $m = new PHPMailer\PHPMailer\PHPMailer(true);
+            $m->isSMTP();
+            $m->Host = 'smtp.gmail.com';
+            $m->SMTPAuth = true;
+            $m->Username = $opt['gmail_user'];
+            $m->Password = $opt['gmail_pass'];
+            $m->SMTPSecure = ($opt['encryption']==='ssl') ? PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS : PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $m->Port = intval($opt['port'])>0 ? intval($opt['port']) : (($opt['encryption']==='ssl')?465:587);
+            $m->Timeout = 10;
+            $ok = $m->smtpConnect();
+            if (!$ok) { $err = 'SMTPサーバーに接続できませんでした。'; return false; }
+            $m->smtpClose();
+            return true;
+        } catch (\Throwable $t) {
+            $err = $t->getMessage();
+            return false;
+        }
+    }
     private function parse_list($v){ $out=[]; foreach(preg_split('/,/',(string)$v) as $p){ $p=trim($p); if($p!=='') $out[]=$this->parse_one($p);} return $out; }
     private function parse_mixed($to){ $out=[]; if(is_array($to)){ foreach($to as $it){ if(is_array($it)){ $e=sanitize_email($it['email']??''); $n=sanitize_text_field($it['name']??''); if($e) $out[]=['email'=>$e,'name'=>$n]; } elseif(is_string($it)){ $out[]=$this->parse_one($it);} } } elseif(is_string($to)){ foreach(preg_split('/\r\n|\r|\n|,/', $to) as $l){ $l=trim($l); if($l!=='') $out[]=$this->parse_one($l);} } return $out; }
     private function parse_one($s){ if(preg_match('/^(.+)<([^>]+)>$/',$s,$m)){ return ['email'=>sanitize_email(trim($m[2])),'name'=>trim($m[1]," \"'")]; } return ['email'=>sanitize_email(trim($s)),'name'=>'']; }
