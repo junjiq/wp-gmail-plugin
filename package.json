@@ -1,0 +1,47 @@
+{
+  "name": "wp-gmail-plugin",
+  "version": "1.0.0",
+  "description": "WordPress plugin for Gmail API integration - Send and receive emails through Gmail with OAuth 2.0 authentication",
+  "main": "wp-gmail-plugin.php",
+  "scripts": {
+    "build": "node build-tool.js",
+    "build:dev": "node build-tool.js --dev",
+    "build:prod": "node build-tool.js --prod --optimize",
+    "package": "npm run build:prod",
+    "clean": "rimraf dist",
+    "validate": "node build-tool.js --validate-only",
+    "version:patch": "npm version patch && npm run build:prod",
+    "version:minor": "npm version minor && npm run build:prod",
+    "version:major": "npm version major && npm run build:prod"
+  },
+  "keywords": [
+    "wordpress",
+    "plugin",
+    "gmail",
+    "email",
+    "api",
+    "oauth",
+    "php"
+  ],
+  "author": "Your Name",
+  "license": "GPL-2.0-or-later",
+  "devDependencies": {
+    "archiver": "^5.3.1",
+    "chalk": "^4.1.2",
+    "fs-extra": "^11.1.1",
+    "glob": "^10.3.3",
+    "rimraf": "^5.0.1",
+    "yargs": "^17.7.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/junjiq/wp-gmail-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/junjiq/wp-gmail-plugin/issues"
+  },
+  "homepage": "https://github.com/junjiq/wp-gmail-plugin#readme"
+}
