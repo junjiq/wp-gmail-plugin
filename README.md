@@ -54,3 +54,20 @@ Gmail の SMTP を使って WordPress の `wp_mail()` を完全に置き換え�
 - 1.1.0: ログ/エラーレポート（保持日数/最大サイズ/ローテーション、通知、ログビューア）
 - 1.0.0: 初期リリース（Gmail SMTP による `wp_mail` 完全置換、テスト送信、基本設定）
 
+## ビルド（配布用ZIPの作成）
+
+環境に応じて次のいずれかを実行してください。出力は `dist/wp-gmail-plugin-<version>.zip` です。
+
+- PHP（推奨・クロスプラットフォーム）
+  - コマンド: `php tools/build-zip.php`
+  - オプション: `php tools/build-zip.php <plugin_dir> <dist_dir>`
+
+- PowerShell（Windows）
+  - コマンド: `powershell -ExecutionPolicy Bypass -File tools/build-zip.ps1`
+  - オプション: `-PluginDir wp-gmail-plugin -DistDir dist`
+
+- Bash（macOS/Linux）
+  - コマンド: `bash tools/build-zip.sh`
+  - 事前に実行権限: `chmod +x tools/build-zip.sh`
+
+補足: PHP の ZipArchive が無効な環境では PowerShell/Bash 版をご利用ください。

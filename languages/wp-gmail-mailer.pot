@@ -1,0 +1,152 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: WP Gmail Mailer 1.2.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"MIME-Version: 1.0\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"X-Domain: wp-gmail-mailer\n"
+
+msgid "WP Gmail Mailer"
+msgstr ""
+
+msgid "Gmail 接続検証に失敗しました: %s"
+msgstr ""
+
+msgid "WP Gmail Mailer テスト送信"
+msgstr ""
+
+msgid "このメールは WP Gmail Mailer からのテストです。"
+msgstr ""
+
+msgid "送信エラー: %s"
+msgstr ""
+
+msgid "テストメールを送信しました。"
+msgstr ""
+
+msgid "送信に失敗しました。"
+msgstr ""
+
+msgid "テスト送信先のメールアドレスを入力してください。"
+msgstr ""
+
+msgid "WP Gmail Mailer 設定"
+msgstr ""
+
+msgid "WordPress のメール送信を Gmail SMTP によって置き換えます。Gmail API は使用しません。"
+msgstr ""
+
+msgid "認証に失敗したため、入力をリセットしました。正しい情報を再入力してください。"
+msgstr ""
+
+msgid "Gmail アドレス"
+msgstr ""
+
+msgid "2段階認証 + アプリパスワードの使用を推奨"
+msgstr ""
+
+msgid "アプリ パスワード"
+msgstr ""
+
+msgid "保存済みのパスワードがあります。"
+msgstr ""
+
+msgid "From アドレス"
+msgstr ""
+
+msgid "From 名称"
+msgstr ""
+
+msgid "暗号化方式"
+msgstr ""
+
+msgid "ポート"
+msgstr ""
+
+msgid "未指定: TLS 587 / SSL 465"
+msgstr ""
+
+msgid "ログ記録"
+msgstr ""
+
+msgid "有効"
+msgstr ""
+
+msgid "送信結果やエラーを uploads/wpgp-logs に記録"
+msgstr ""
+
+msgid "ログ保持日数"
+msgstr ""
+
+msgid "ログ最大サイズ"
+msgstr ""
+
+msgid "エラー通知"
+msgstr ""
+
+msgid "管理画面に通知"
+msgstr ""
+
+msgid "変更を保存"
+msgstr ""
+
+msgid "テスト送信"
+msgstr ""
+
+msgid "送信先メールアドレス"
+msgstr ""
+
+msgid "テストメールを送信"
+msgstr ""
+
+msgid "Gmail の送信制限やセキュリティ設定によりブロックされる場合があります。"
+msgstr ""
+
+msgid "ログビューア"
+msgstr ""
+
+msgid "ログファイル"
+msgstr ""
+
+msgid "未作成"
+msgstr ""
+
+msgid "ログをダウンロード"
+msgstr ""
+
+msgid "ログを削除します。よろしいですか？"
+msgstr ""
+
+msgid "ログをクリア"
+msgstr ""
+
+msgid "ログがまだありません。"
+msgstr ""
+
+msgid "設定未完了のため送信不可"
+msgstr ""
+
+msgid "設定が未完了です。Gmail アドレスとアプリパスワードを設定してください。"
+msgstr ""
+
+msgid "設定が未完了です。"
+msgstr ""
+
+msgid "メール送信に失敗"
+msgstr ""
+
+msgid "メール送信に失敗しました: %s"
+msgstr ""
+
+msgid "メール送信に失敗しました。"
+msgstr ""
+
+msgid "メール送信に成功"
+msgstr ""
+
+msgid "設定/ログを確認"
+msgstr ""

@@ -1,0 +1,150 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: WP Gmail Mailer 1.2.0\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Domain: wp-gmail-mailer\n"
+
+msgid "WP Gmail Mailer"
+msgstr "WP Gmail Mailer"
+
+msgid "Gmail 接続検証に失敗しました: %s"
+msgstr "Failed to verify Gmail connection: %s"
+
+msgid "WP Gmail Mailer テスト送信"
+msgstr "WP Gmail Mailer Test Email"
+
+msgid "このメールは WP Gmail Mailer からのテストです。"
+msgstr "This email is a test from WP Gmail Mailer."
+
+msgid "送信エラー: %s"
+msgstr "Send error: %s"
+
+msgid "テストメールを送信しました。"
+msgstr "Test email sent."
+
+msgid "送信に失敗しました。"
+msgstr "Failed to send."
+
+msgid "テスト送信先のメールアドレスを入力してください。"
+msgstr "Please enter a destination email address for the test."
+
+msgid "WP Gmail Mailer 設定"
+msgstr "WP Gmail Mailer Settings"
+
+msgid "WordPress のメール送信を Gmail SMTP によって置き換えます。Gmail API は使用しません。"
+msgstr "Replace WordPress mail sending with Gmail SMTP. Gmail API is not used."
+
+msgid "認証に失敗したため、入力をリセットしました。正しい情報を再入力してください。"
+msgstr "Authentication failed. Inputs were reset. Please re-enter correct information."
+
+msgid "Gmail アドレス"
+msgstr "Gmail Address"
+
+msgid "2段階認証 + アプリパスワードの使用を推奨"
+msgstr "Enable 2‑Step Verification and use an App Password"
+
+msgid "アプリ パスワード"
+msgstr "App Password"
+
+msgid "保存済みのパスワードがあります。"
+msgstr "A password is already saved."
+
+msgid "From アドレス"
+msgstr "From Address"
+
+msgid "From 名称"
+msgstr "From Name"
+
+msgid "暗号化方式"
+msgstr "Encryption"
+
+msgid "ポート"
+msgstr "Port"
+
+msgid "未指定: TLS 587 / SSL 465"
+msgstr "Unspecified: TLS 587 / SSL 465"
+
+msgid "ログ記録"
+msgstr "Logging"
+
+msgid "有効"
+msgstr "Enable"
+
+msgid "送信結果やエラーを uploads/wpgp-logs に記録"
+msgstr "Record results and errors under uploads/wpgp-logs"
+
+msgid "ログ保持日数"
+msgstr "Log Retention (days)"
+
+msgid "ログ最大サイズ"
+msgstr "Max Log Size"
+
+msgid "エラー通知"
+msgstr "Error Notification"
+
+msgid "管理画面に通知"
+msgstr "Show admin notice"
+
+msgid "変更を保存"
+msgstr "Save Changes"
+
+msgid "テスト送信"
+msgstr "Test Send"
+
+msgid "送信先メールアドレス"
+msgstr "Destination email address"
+
+msgid "テストメールを送信"
+msgstr "Send Test Email"
+
+msgid "Gmail の送信制限やセキュリティ設定によりブロックされる場合があります。"
+msgstr "Gmail may block sending due to limits or security settings."
+
+msgid "ログビューア"
+msgstr "Log Viewer"
+
+msgid "ログファイル"
+msgstr "Log File"
+
+msgid "未作成"
+msgstr "Not created"
+
+msgid "ログをダウンロード"
+msgstr "Download Log"
+
+msgid "ログを削除します。よろしいですか？"
+msgstr "Delete the log?"
+
+msgid "ログをクリア"
+msgstr "Clear Log"
+
+msgid "ログがまだありません。"
+msgstr "No logs yet."
+
+msgid "設定未完了のため送信不可"
+msgstr "Cannot send because setup is incomplete"
+
+msgid "設定が未完了です。Gmail アドレスとアプリパスワードを設定してください。"
+msgstr "Setup incomplete. Please configure Gmail address and App Password."
+
+msgid "設定が未完了です。"
+msgstr "Setup incomplete."
+
+msgid "メール送信に失敗"
+msgstr "Mail send failed"
+
+msgid "メール送信に失敗しました: %s"
+msgstr "Mail sending failed: %s"
+
+msgid "メール送信に失敗しました。"
+msgstr "Mail sending failed."
+
+msgid "メール送信に成功"
+msgstr "Mail sent successfully"
+
+msgid "設定/ログを確認"
+msgstr "Open settings/logs"
+

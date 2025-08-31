@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 772 250">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a73e8"/>
+      <stop offset="100%" stop-color="#34a853"/>
+    </linearGradient>
+  </defs>
+  <rect width="772" height="250" rx="18" fill="url(#bg)"/>
+  <g fill="#fff" font-family="Arial, Helvetica, sans-serif">
+    <text x="40" y="110" font-size="42" font-weight="700">WP Gmail Mailer</text>
+    <text x="40" y="155" font-size="20">Replace wp_mail with Gmail SMTP (no API)</text>
+    <text x="40" y="185" font-size="18">Logging • Error notices • Test send</text>
+  </g>
+</svg>

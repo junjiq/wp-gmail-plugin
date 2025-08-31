@@ -1,0 +1,150 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: WP Gmail Mailer 1.2.0\n"
+"Language: ja_JP\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Domain: wp-gmail-mailer\n"
+
+msgid "WP Gmail Mailer"
+msgstr "WP Gmail Mailer"
+
+msgid "Gmail 接続検証に失敗しました: %s"
+msgstr "Gmail 接続検証に失敗しました: %s"
+
+msgid "WP Gmail Mailer テスト送信"
+msgstr "WP Gmail Mailer テスト送信"
+
+msgid "このメールは WP Gmail Mailer からのテストです。"
+msgstr "このメールは WP Gmail Mailer からのテストです。"
+
+msgid "送信エラー: %s"
+msgstr "送信エラー: %s"
+
+msgid "テストメールを送信しました。"
+msgstr "テストメールを送信しました。"
+
+msgid "送信に失敗しました。"
+msgstr "送信に失敗しました。"
+
+msgid "テスト送信先のメールアドレスを入力してください。"
+msgstr "テスト送信先のメールアドレスを入力してください。"
+
+msgid "WP Gmail Mailer 設定"
+msgstr "WP Gmail Mailer 設定"
+
+msgid "WordPress のメール送信を Gmail SMTP によって置き換えます。Gmail API は使用しません。"
+msgstr "WordPress のメール送信を Gmail SMTP によって置き換えます。Gmail API は使用しません。"
+
+msgid "認証に失敗したため、入力をリセットしました。正しい情報を再入力してください。"
+msgstr "認証に失敗したため、入力をリセットしました。正しい情報を再入力してください。"
+
+msgid "Gmail アドレス"
+msgstr "Gmail アドレス"
+
+msgid "2段階認証 + アプリパスワードの使用を推奨"
+msgstr "2段階認証 + アプリパスワードの使用を推奨"
+
+msgid "アプリ パスワード"
+msgstr "アプリ パスワード"
+
+msgid "保存済みのパスワードがあります。"
+msgstr "保存済みのパスワードがあります。"
+
+msgid "From アドレス"
+msgstr "From アドレス"
+
+msgid "From 名称"
+msgstr "From 名称"
+
+msgid "暗号化方式"
+msgstr "暗号化方式"
+
+msgid "ポート"
+msgstr "ポート"
+
+msgid "未指定: TLS 587 / SSL 465"
+msgstr "未指定: TLS 587 / SSL 465"
+
+msgid "ログ記録"
+msgstr "ログ記録"
+
+msgid "有効"
+msgstr "有効"
+
+msgid "送信結果やエラーを uploads/wpgp-logs に記録"
+msgstr "送信結果やエラーを uploads/wpgp-logs に記録"
+
+msgid "ログ保持日数"
+msgstr "ログ保持日数"
+
+msgid "ログ最大サイズ"
+msgstr "ログ最大サイズ"
+
+msgid "エラー通知"
+msgstr "エラー通知"
+
+msgid "管理画面に通知"
+msgstr "管理画面に通知"
+
+msgid "変更を保存"
+msgstr "変更を保存"
+
+msgid "テスト送信"
+msgstr "テスト送信"
+
+msgid "送信先メールアドレス"
+msgstr "送信先メールアドレス"
+
+msgid "テストメールを送信"
+msgstr "テストメールを送信"
+
+msgid "Gmail の送信制限やセキュリティ設定によりブロックされる場合があります。"
+msgstr "Gmail の送信制限やセキュリティ設定によりブロックされる場合があります。"
+
+msgid "ログビューア"
+msgstr "ログビューア"
+
+msgid "ログファイル"
+msgstr "ログファイル"
+
+msgid "未作成"
+msgstr "未作成"
+
+msgid "ログをダウンロード"
+msgstr "ログをダウンロード"
+
+msgid "ログを削除します。よろしいですか？"
+msgstr "ログを削除します。よろしいですか？"
+
+msgid "ログをクリア"
+msgstr "ログをクリア"
+
+msgid "ログがまだありません。"
+msgstr "ログがまだありません。"
+
+msgid "設定未完了のため送信不可"
+msgstr "設定未完了のため送信不可"
+
+msgid "設定が未完了です。Gmail アドレスとアプリパスワードを設定してください。"
+msgstr "設定が未完了です。Gmail アドレスとアプリパスワードを設定してください。"
+
+msgid "設定が未完了です。"
+msgstr "設定が未完了です。"
+
+msgid "メール送信に失敗"
+msgstr "メール送信に失敗"
+
+msgid "メール送信に失敗しました: %s"
+msgstr "メール送信に失敗しました: %s"
+
+msgid "メール送信に失敗しました。"
+msgstr "メール送信に失敗しました。"
+
+msgid "メール送信に成功"
+msgstr "メール送信に成功"
+
+msgid "設定/ログを確認"
+msgstr "設定/ログを確認"
+

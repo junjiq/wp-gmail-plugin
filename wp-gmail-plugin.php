@@ -4,6 +4,10 @@ Plugin Name: WP Gmail Mailer (SMTP Replacement)
 Description: Gmail アカウントのSMTPで WordPress の wp_mail を完全置換（受信なし / Gmail API 不使用）。
 Version: 1.2.0
 Author: Your Name
+Text Domain: wp-gmail-mailer
+Domain Path: /languages
+Requires at least: 5.8
+Requires PHP: 7.2
 */
 
 if (!defined('ABSPATH')) exit;
@@ -22,6 +26,11 @@ final class WPGP_Plugin {
         add_action('admin_notices', [$this, 'admin_notices']);
         add_action('admin_post_wpgp_download_log', [$this, 'download_log']);
         add_action('admin_post_wpgp_clear_log', [$this, 'clear_log']);
+        add_action('init', [$this, 'load_textdomain']);
+    }
+
+    public function load_textdomain() {
+        load_plugin_textdomain('wp-gmail-mailer', false, dirname(plugin_basename(__FILE__)) . '/languages');
     }
 
     // ===== Options =====
@@ -47,7 +56,7 @@ final class WPGP_Plugin {
 
     // ===== Admin =====
     public function admin_menu() {
-        add_options_page('WP Gmail Mailer', 'WP Gmail Mailer', 'manage_options', 'wpgp-settings', [$this, 'render_settings']);
+        add_options_page(__('WP Gmail Mailer', 'wp-gmail-mailer'), __('WP Gmail Mailer', 'wp-gmail-mailer'), 'manage_options', 'wpgp-settings', [$this, 'render_settings']);
     }
     public function admin_init() {
         register_setting('wpgp_settings_group', self::OPTIONS_KEY, ['sanitize_callback'=>[$this,'sanitize']]);
@@ -74,7 +83,7 @@ final class WPGP_Plugin {
         if ($changed && $out['gmail_user'] && $out['gmail_pass']) {
             $err = '';
             if (!$this->validate_smtp($out, $err)) {
-                add_settings_error('wpgp_settings_group', 'wpgp_validate_error', 'Gmail 接続検証に失敗しました: ' . esc_html($err), 'error');
+                add_settings_error('wpgp_settings_group', 'wpgp_validate_error', sprintf(__('Gmail 接続検証に失敗しました: %s', 'wp-gmail-mailer'), $err), 'error');
                 set_transient('wpgp_reset_fields', 1, MINUTE_IN_SECONDS * 5);
                 // 変更破棄
                 return $o;
@@ -88,73 +97,73 @@ final class WPGP_Plugin {
         if (isset($_POST['wpgp_test_send']) && check_admin_referer('wpgp_test_send')) {
             $to = isset($_POST['wpgp_test_to']) ? sanitize_email(wp_unslash($_POST['wpgp_test_to'])) : '';
             if ($to) {
-                $ok = wp_mail($to, 'WP Gmail Mailer テスト送信', 'このメールは WP Gmail Mailer からのテストです。');
-                if (is_wp_error($ok)) $test = '<div class="notice notice-error"><p>送信エラー: '.esc_html($ok->get_error_message()).'</p></div>';
-                elseif ($ok) $test = '<div class="notice notice-success"><p>テストメールを送信しました。</p></div>';
-                else $test = '<div class="notice notice-error"><p>送信に失敗しました。</p></div>';
+                $ok = wp_mail($to, __('WP Gmail Mailer テスト送信', 'wp-gmail-mailer'), __('このメールは WP Gmail Mailer からのテストです。', 'wp-gmail-mailer'));
+                if (is_wp_error($ok)) $test = '<div class="notice notice-error"><p>'.sprintf(__('送信エラー: %s', 'wp-gmail-mailer'), esc_html($ok->get_error_message())).'</p></div>';
+                elseif ($ok) $test = '<div class="notice notice-success"><p>'.esc_html__('テストメールを送信しました。', 'wp-gmail-mailer').'</p></div>';
+                else $test = '<div class="notice notice-error"><p>'.esc_html__('送信に失敗しました。', 'wp-gmail-mailer').'</p></div>';
             } else {
-                $test = '<div class="notice notice-warning"><p>テスト送信先のメールアドレスを入力してください。</p></div>';
+                $test = '<div class="notice notice-warning"><p>'.esc_html__('テスト送信先のメールアドレスを入力してください。', 'wp-gmail-mailer').'</p></div>';
             }
         }
         ?>
         <div class="wrap">
-            <h1>WP Gmail Mailer 設定</h1>
-            <p>WordPress のメール送信を Gmail SMTP によって置き換えます。Gmail API は使用しません。</p>
+            <h1><?php echo esc_html__('WP Gmail Mailer 設定', 'wp-gmail-mailer'); ?></h1>
+            <p><?php echo esc_html__('WordPress のメール送信を Gmail SMTP によって置き換えます。Gmail API は使用しません。', 'wp-gmail-mailer'); ?></p>
             <?php settings_errors('wpgp_settings_group'); ?>
             <?php if (get_transient('wpgp_reset_fields')): delete_transient('wpgp_reset_fields'); $o['gmail_user']=''; $o['from_email']=''; ?>
-                <div class="notice notice-warning"><p>認証に失敗したため、入力をリセットしました。正しい情報を再入力してください。</p></div>
+                <div class="notice notice-warning"><p><?php echo esc_html__('認証に失敗したため、入力をリセットしました。正しい情報を再入力してください。', 'wp-gmail-mailer'); ?></p></div>
             <?php endif; ?>
             <?php echo $test; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
             <form method="post" action="options.php">
                 <?php settings_fields('wpgp_settings_group'); $o=$this->opts(); ?>
                 <table class="form-table" role="presentation">
-                    <tr><th><label for="wpgp_gmail_user">Gmail アドレス</label></th>
+                    <tr><th><label for="wpgp_gmail_user"><?php echo esc_html__('Gmail アドレス', 'wp-gmail-mailer'); ?></label></th>
                         <td><input type="email" id="wpgp_gmail_user" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[gmail_user]" value="<?php echo esc_attr($o['gmail_user']); ?>" class="regular-text" required>
-                        <p class="description">2段階認証 + アプリパスワードの使用を推奨</p></td></tr>
-                    <tr><th><label for="wpgp_gmail_pass">アプリ パスワード</label></th>
+                        <p class="description"><?php echo esc_html__('2段階認証 + アプリパスワードの使用を推奨', 'wp-gmail-mailer'); ?></p></td></tr>
+                    <tr><th><label for="wpgp_gmail_pass"><?php echo esc_html__('アプリ パスワード', 'wp-gmail-mailer'); ?></label></th>
                         <td><input type="password" id="wpgp_gmail_pass" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[gmail_pass]" value="" class="regular-text" placeholder="変更しない場合は空" autocomplete="new-password">
-                        <?php if (!empty($o['gmail_pass'])): ?><p class="description">保存済みのパスワードがあります。</p><?php endif; ?></td></tr>
-                    <tr><th><label for="wpgp_from_email">From アドレス</label></th>
+                        <?php if (!empty($o['gmail_pass'])): ?><p class="description"><?php echo esc_html__('保存済みのパスワードがあります。', 'wp-gmail-mailer'); ?></p><?php endif; ?></td></tr>
+                    <tr><th><label for="wpgp_from_email"><?php echo esc_html__('From アドレス', 'wp-gmail-mailer'); ?></label></th>
                         <td><input type="email" id="wpgp_from_email" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[from_email]" value="<?php echo esc_attr($o['from_email']); ?>" class="regular-text" placeholder="省略時は Gmail アドレス"></td></tr>
-                    <tr><th><label for="wpgp_from_name">From 名称</label></th>
+                    <tr><th><label for="wpgp_from_name"><?php echo esc_html__('From 名称', 'wp-gmail-mailer'); ?></label></th>
                         <td><input type="text" id="wpgp_from_name" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[from_name]" value="<?php echo esc_attr($o['from_name']); ?>" class="regular-text"></td></tr>
-                    <tr><th>暗号化方式</th>
+                    <tr><th><?php echo esc_html__('暗号化方式', 'wp-gmail-mailer'); ?></th>
                         <td><label><input type="radio" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[encryption]" value="tls" <?php checked($o['encryption'],'tls'); ?>> TLS</label>
                             &nbsp; <label><input type="radio" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[encryption]" value="ssl" <?php checked($o['encryption'],'ssl'); ?>> SSL</label></td></tr>
-                    <tr><th><label for="wpgp_port">ポート</label></th>
+                    <tr><th><label for="wpgp_port"><?php echo esc_html__('ポート', 'wp-gmail-mailer'); ?></label></th>
                         <td><input type="number" id="wpgp_port" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[port]" value="<?php echo esc_attr((string)($o['port']?:'')); ?>" class="small-text" placeholder="自動">
-                        <p class="description">未指定: TLS 587 / SSL 465</p></td></tr>
-                    <tr><th>ログ記録</th>
-                        <td><label><input type="checkbox" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[logging_enabled]" value="1" <?php checked($o['logging_enabled'],true); ?>> 有効</label>
-                        <p class="description">送信結果やエラーを uploads/wpgp-logs に記録</p></td></tr>
-                    <tr><th><label for="wpgp_log_retain_days">ログ保持日数</label></th>
+                        <p class="description"><?php echo esc_html__('未指定: TLS 587 / SSL 465', 'wp-gmail-mailer'); ?></p></td></tr>
+                    <tr><th><?php echo esc_html__('ログ記録', 'wp-gmail-mailer'); ?></th>
+                        <td><label><input type="checkbox" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[logging_enabled]" value="1" <?php checked($o['logging_enabled'],true); ?>> <?php echo esc_html__('有効', 'wp-gmail-mailer'); ?></label>
+                        <p class="description"><?php echo esc_html__('送信結果やエラーを uploads/wpgp-logs に記録', 'wp-gmail-mailer'); ?></p></td></tr>
+                    <tr><th><label for="wpgp_log_retain_days"><?php echo esc_html__('ログ保持日数', 'wp-gmail-mailer'); ?></label></th>
                         <td><input type="number" id="wpgp_log_retain_days" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[log_retain_days]" value="<?php echo esc_attr((string)$o['log_retain_days']); ?>" class="small-text" min="0" max="365"> 日</td></tr>
-                    <tr><th><label for="wpgp_log_max_size_kb">ログ最大サイズ</label></th>
+                    <tr><th><label for="wpgp_log_max_size_kb"><?php echo esc_html__('ログ最大サイズ', 'wp-gmail-mailer'); ?></label></th>
                         <td><input type="number" id="wpgp_log_max_size_kb" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[log_max_size_kb]" value="<?php echo esc_attr((string)$o['log_max_size_kb']); ?>" class="small-text" min="32" max="10240"> KB</td></tr>
-                    <tr><th>エラー通知</th>
-                        <td><label><input type="checkbox" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[notify_admin]" value="1" <?php checked($o['notify_admin'],true); ?>> 管理画面に通知</label></td></tr>
+                    <tr><th><?php echo esc_html__('エラー通知', 'wp-gmail-mailer'); ?></th>
+                        <td><label><input type="checkbox" name="<?php echo esc_attr(self::OPTIONS_KEY); ?>[notify_admin]" value="1" <?php checked($o['notify_admin'],true); ?>> <?php echo esc_html__('管理画面に通知', 'wp-gmail-mailer'); ?></label></td></tr>
                 </table>
-                <?php submit_button('変更を保存'); ?>
+                <?php submit_button(__('変更を保存', 'wp-gmail-mailer')); ?>
             </form>
             <hr>
-            <h2>テスト送信</h2>
+            <h2><?php echo esc_html__('テスト送信', 'wp-gmail-mailer'); ?></h2>
             <form method="post">
                 <?php wp_nonce_field('wpgp_test_send'); ?>
-                <input type="email" name="wpgp_test_to" class="regular-text" placeholder="送信先メールアドレス">
-                <?php submit_button('テストメールを送信', 'secondary', 'wpgp_test_send', false); ?>
+                <input type="email" name="wpgp_test_to" class="regular-text" placeholder="<?php echo esc_attr__('送信先メールアドレス', 'wp-gmail-mailer'); ?>">
+                <?php submit_button(__('テストメールを送信', 'wp-gmail-mailer'), 'secondary', 'wpgp_test_send', false); ?>
             </form>
-            <p class="description">Gmail の送信制限やセキュリティ設定によりブロックされる場合があります。</p>
+            <p class="description"><?php echo esc_html__('Gmail の送信制限やセキュリティ設定によりブロックされる場合があります。', 'wp-gmail-mailer'); ?></p>
             <hr>
-            <h2>ログビューア</h2>
+            <h2><?php echo esc_html__('ログビューア', 'wp-gmail-mailer'); ?></h2>
             <?php $path=$this->log_path(); $exists=$path && file_exists($path); ?>
-            <p>ログファイル: <code><?php echo esc_html($path?:'未作成'); ?></code></p>
+            <p><?php echo esc_html__('ログファイル', 'wp-gmail-mailer'); ?>: <code><?php echo esc_html($path?:__('未作成','wp-gmail-mailer')); ?></code></p>
             <?php if ($exists): ?>
 <pre style="max-height:300px;overflow:auto;background:#fff;border:1px solid #ccd0d4;padding:10px;white-space:pre-wrap;"><?php echo esc_html($this->tail($path,200)); ?></pre>
             <p>
-                <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=wpgp_download_log'),'wpgp_download_log')); ?>">ログをダウンロード</a>
-                <a class="button button-secondary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=wpgp_clear_log'),'wpgp_clear_log')); ?>" onclick="return confirm('ログを削除します。よろしいですか？');">ログをクリア</a>
+                <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=wpgp_download_log'),'wpgp_download_log')); ?>"><?php echo esc_html__('ログをダウンロード', 'wp-gmail-mailer'); ?></a>
+                <a class="button button-secondary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=wpgp_clear_log'),'wpgp_clear_log')); ?>" onclick="return confirm('<?php echo esc_js(__('ログを削除します。よろしいですか？','wp-gmail-mailer')); ?>');"><?php echo esc_html__('ログをクリア', 'wp-gmail-mailer'); ?></a>
             </p>
-            <?php else: ?><p>ログがまだありません。</p><?php endif; ?>
+            <?php else: ?><p><?php echo esc_html__('ログがまだありません。', 'wp-gmail-mailer'); ?></p><?php endif; ?>
         </div>
         <?php
     }
@@ -163,9 +172,9 @@ final class WPGP_Plugin {
     public function pre_wp_mail($null, $atts) {
         $o = $this->opts();
         if (empty($o['gmail_user']) || empty($o['gmail_pass'])) {
-            $this->log('error','設定未完了のため送信不可');
-            $this->notice('設定が未完了です。Gmail アドレスとアプリパスワードを設定してください。');
-            return new WP_Error('wpgp_not_configured','設定が未完了です。');
+            $this->log('error',__('設定未完了のため送信不可', 'wp-gmail-mailer'));
+            $this->notice(__('設定が未完了です。Gmail アドレスとアプリパスワードを設定してください。', 'wp-gmail-mailer'));
+            return new WP_Error('wpgp_not_configured',__('設定が未完了です。', 'wp-gmail-mailer'));
         }
         $from_email = apply_filters('wp_mail_from', $o['from_email'] ?: $o['gmail_user']);
         $from_name  = apply_filters('wp_mail_from_name', $o['from_name']);
@@ -211,15 +220,15 @@ final class WPGP_Plugin {
             $m->Subject=$subject;
             foreach ($attachments as $f) { $f=trim($f); if ($f!==''&&file_exists($f)) { try{$m->addAttachment($f);}catch(\Exception $e){} } }
             $sent=$m->send();
-            if (!$sent) { $this->log('error','メール送信に失敗',['to'=>$to,'subject'=>$subject]); $this->notice('メール送信に失敗しました: '.$subject); return new WP_Error('wpgp_send_failed','メール送信に失敗しました。'); }
-            $this->log('info','メール送信に成功',['to'=>$to,'subject'=>$subject]);
+            if (!$sent) { $this->log('error',__('メール送信に失敗','wp-gmail-mailer'),['to'=>$to,'subject'=>$subject]); $this->notice(sprintf(__('メール送信に失敗しました: %s','wp-gmail-mailer'), $subject)); return new WP_Error('wpgp_send_failed',__('メール送信に失敗しました。','wp-gmail-mailer')); }
+            $this->log('info',__('メール送信に成功','wp-gmail-mailer'),['to'=>$to,'subject'=>$subject]);
             return true;
         } catch (\Exception $e) {
-            $this->log('error','送信エラー: '.$e->getMessage(),['to'=>$to,'subject'=>$subject]); $this->notice('送信エラー: '.$e->getMessage());
-            return new WP_Error('wpgp_exception','送信エラー: '.$e->getMessage());
+            $this->log('error',sprintf(__('送信エラー: %s','wp-gmail-mailer'), $e->getMessage()),['to'=>$to,'subject'=>$subject]); $this->notice(sprintf(__('送信エラー: %s','wp-gmail-mailer'), $e->getMessage()));
+            return new WP_Error('wpgp_exception',sprintf(__('送信エラー: %s','wp-gmail-mailer'), $e->getMessage()));
         } catch (\Throwable $t) {
-            $this->log('error','送信エラー: '.$t->getMessage(),['to'=>$to,'subject'=>$subject]); $this->notice('送信エラー: '.$t->getMessage());
-            return new WP_Error('wpgp_throwable','送信エラー: '.$t->getMessage());
+            $this->log('error',sprintf(__('送信エラー: %s','wp-gmail-mailer'), $t->getMessage()),['to'=>$to,'subject'=>$subject]); $this->notice(sprintf(__('送信エラー: %s','wp-gmail-mailer'), $t->getMessage()));
+            return new WP_Error('wpgp_throwable',sprintf(__('送信エラー: %s','wp-gmail-mailer'), $t->getMessage()));
         }
     }
 
@@ -258,11 +267,10 @@ final class WPGP_Plugin {
     private function log($level,$msg,$ctx=[]){ $o=$this->opts(); if(empty($o['logging_enabled'])) return; $f=$this->log_path(); if(!$f) return; $date=gmdate('Y-m-d H:i:s'); $line=sprintf('[%s] %s: %s',$date,strtoupper($level),$msg); if($ctx){ $s=$ctx; if(isset($s['to'])){ if(is_array($s['to'])) $s['to']=implode(',',array_map(function($x){return is_array($x)?($x['email']??''):(string)$x;},$s['to'])); else $s['to']=(string)$s['to']; } if(isset($s['subject'])) $s['subject']=(string)$s['subject']; $line.=' | '.wp_json_encode($s);} @file_put_contents($f,$line."\n",FILE_APPEND|LOCK_EX); }
     private function tail($file,$lines=200){ if(!file_exists($file)) return ''; $h=@fopen($file,'r'); if(!$h) return ''; $buf='';$pos=-1;$cnt=0;$st=fstat($h);$sz=$st['size']; while($cnt<$lines && -$pos<=$sz){ fseek($h,$pos,SEEK_END); $c=fgetc($h); if($c==="\n"){ $cnt++; if($cnt>1)$buf=$c.$buf; } else { $buf=$c.$buf; } $pos--; } fclose($h); return trim($buf);}    
     private function notice($msg){ $o=$this->opts(); if(empty($o['notify_admin'])) return; set_transient(self::TRANSIENT_ERROR_NOTICE,(string)$msg,HOUR_IN_SECONDS); }
-    public function admin_notices(){ if(!current_user_can('manage_options')) return; $m=get_transient(self::TRANSIENT_ERROR_NOTICE); if(!$m) return; echo '<div class="notice notice-error is-dismissible"><p><strong>WP Gmail Mailer:</strong> '.esc_html($m).' <a href="'.esc_url(admin_url('options-general.php?page=wpgp-settings')).'">設定/ログを確認</a></p></div>'; }
+    public function admin_notices(){ if(!current_user_can('manage_options')) return; $m=get_transient(self::TRANSIENT_ERROR_NOTICE); if(!$m) return; echo '<div class="notice notice-error is-dismissible"><p><strong>WP Gmail Mailer:</strong> '.esc_html($m).' <a href="'.esc_url(admin_url('options-general.php?page=wpgp-settings')).'">'.esc_html__('設定/ログを確認','wp-gmail-mailer').'</a></p></div>'; }
     public function download_log(){ if(!current_user_can('manage_options')) wp_die('forbidden'); check_admin_referer('wpgp_download_log'); $p=$this->log_path(); if(!$p||!file_exists($p)) wp_die('ログが見つかりません'); header('Content-Type: text/plain; charset=UTF-8'); header('Content-Disposition: attachment; filename="wpgp-mail.log"'); readfile($p); exit; }
     public function clear_log(){ if(!current_user_can('manage_options')) wp_die('forbidden'); check_admin_referer('wpgp_clear_log'); $p=$this->log_path(); if($p&&file_exists($p)) @unlink($p); wp_safe_redirect(wp_get_referer()?:admin_url('options-general.php?page=wpgp-settings')); exit; }
 }
 
 add_action('plugins_loaded', function(){ WPGP_Plugin::instance()->hooks(); });
 ?>
-
