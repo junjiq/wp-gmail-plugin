@@ -1,0 +1,251 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: WP Gmail Plugin 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-01 12:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: WordPress\n"
+
+#: wp-gmail-plugin.php:87
+msgid "Gmail Plugin"
+msgstr ""
+
+#: wp-gmail-plugin.php:88
+msgid "Gmail"
+msgstr ""
+
+#: wp-gmail-plugin.php:95 templates/admin-settings.php:45
+msgid "Settings"
+msgstr ""
+
+#: wp-gmail-plugin.php:103
+msgid "Compose Email"
+msgstr ""
+
+#: wp-gmail-plugin.php:104
+msgid "Compose"
+msgstr ""
+
+#: wp-gmail-plugin.php:112
+msgid "Inbox"
+msgstr ""
+
+#: templates/admin-settings.php:46
+msgid "Gmail API Settings"
+msgstr ""
+
+#: templates/admin-settings.php:53
+msgid "Client ID"
+msgstr ""
+
+#: templates/admin-settings.php:58
+msgid "Google Cloud ConsoleでGmail APIを有効にして取得したClient IDを入力してください。"
+msgstr ""
+
+#: templates/admin-settings.php:65
+msgid "Client Secret"
+msgstr ""
+
+#: templates/admin-settings.php:70
+msgid "Google Cloud ConsoleでGmail APIを有効にして取得したClient Secretを入力してください。"
+msgstr ""
+
+#: templates/admin-settings.php:77
+msgid "Redirect URI"
+msgstr ""
+
+#: templates/admin-settings.php:82
+msgid "この URLをGoogle Cloud Consoleの認証済みリダイレクト URIに追加してください。"
+msgstr ""
+
+#: templates/admin-settings.php:89
+msgid "Sync Interval (seconds)"
+msgstr ""
+
+#: templates/admin-settings.php:94
+msgid "メール同期の間隔を秒単位で指定してください（60-3600秒）。"
+msgstr ""
+
+#: templates/admin-settings.php:101
+msgid "Max Emails to Fetch"
+msgstr ""
+
+#: templates/admin-settings.php:106
+msgid "一度に取得するメールの最大数を指定してください（10-1000件）。"
+msgstr ""
+
+#: templates/admin-settings.php:112
+msgid "Save Settings"
+msgstr ""
+
+#: templates/admin-settings.php:119
+msgid "Authentication Status"
+msgstr ""
+
+#: templates/admin-settings.php:124 templates/admin-settings.php:128
+msgid "Status:"
+msgstr ""
+
+#: templates/admin-settings.php:125
+msgid "Authenticated"
+msgstr ""
+
+#: templates/admin-settings.php:127 templates/admin-settings.php:129
+msgid "Email:"
+msgstr ""
+
+#: templates/admin-settings.php:130
+msgid "Total Messages:"
+msgstr ""
+
+#: templates/admin-settings.php:133
+msgid "Total Threads:"
+msgstr ""
+
+#: templates/admin-settings.php:140
+msgid "Reset Authentication"
+msgstr ""
+
+#: templates/admin-settings.php:142
+msgid "Are you sure you want to reset the authentication?"
+msgstr ""
+
+#: templates/admin-settings.php:147
+msgid "Not Authenticated"
+msgstr ""
+
+#: templates/admin-settings.php:148
+msgid "Please authenticate with Gmail to use the plugin features."
+msgstr ""
+
+#: templates/admin-settings.php:153
+msgid "Authenticate with Gmail"
+msgstr ""
+
+#: templates/admin-settings.php:156
+msgid "Please save your API credentials first, then authenticate with Gmail."
+msgstr ""
+
+#: templates/admin-compose.php:89
+msgid "To"
+msgstr ""
+
+#: templates/admin-compose.php:95
+msgid "Enter recipient email address. For multiple recipients, separate with commas."
+msgstr ""
+
+#: templates/admin-compose.php:102
+msgid "CC"
+msgstr ""
+
+#: templates/admin-compose.php:107
+msgid "Carbon copy recipients (optional)."
+msgstr ""
+
+#: templates/admin-compose.php:114
+msgid "BCC"
+msgstr ""
+
+#: templates/admin-compose.php:119
+msgid "Blind carbon copy recipients (optional)."
+msgstr ""
+
+#: templates/admin-compose.php:126
+msgid "Subject"
+msgstr ""
+
+#: templates/admin-compose.php:135
+msgid "Message"
+msgstr ""
+
+#: templates/admin-compose.php:157
+msgid "Send as HTML email"
+msgstr ""
+
+#: templates/admin-compose.php:164
+msgid "Send Email"
+msgstr ""
+
+#: templates/admin-compose.php:168
+msgid "Save Draft"
+msgstr ""
+
+#: templates/admin-compose.php:171
+msgid "Clear Form"
+msgstr ""
+
+#: templates/admin-compose.php:175
+msgid "Delete Draft"
+msgstr ""
+
+#: templates/admin-inbox.php:89
+msgid "Search emails..."
+msgstr ""
+
+#: templates/admin-inbox.php:90 templates/admin-inbox.php:468
+msgid "Search"
+msgstr ""
+
+#: templates/admin-inbox.php:93
+msgid "Clear"
+msgstr ""
+
+#: templates/admin-inbox.php:111 templates/admin-inbox.php:474
+msgid "Sync"
+msgstr ""
+
+#: templates/shortcode-compose.php:51
+msgid "Gmail authentication required."
+msgstr ""
+
+#: templates/shortcode-inbox.php:51
+msgid "Recent Emails"
+msgstr ""
+
+#: templates/shortcode-inbox.php:58
+msgid "No emails found."
+msgstr ""
+
+#: includes/functions.php:85
+msgid "受信トレイ"
+msgstr ""
+
+#: includes/functions.php:86
+msgid "送信済み"
+msgstr ""
+
+#: includes/functions.php:87
+msgid "下書き"
+msgstr ""
+
+#: includes/functions.php:88
+msgid "スパム"
+msgstr ""
+
+#: includes/functions.php:89
+msgid "ゴミ箱"
+msgstr ""
+
+#: includes/functions.php:90
+msgid "未読"
+msgstr ""
+
+#: includes/functions.php:91
+msgid "スター付き"
+msgstr ""
+
+#: includes/functions.php:92
+msgid "重要"
+msgstr ""
