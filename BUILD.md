@@ -1,148 +1,375 @@
-# BUILD ガイド（wp-gmail-plugin）
+# WP Gmail Plugin ビルドガイド
 
-このドキュメントは、WordPress 向けプラグイン「wp-gmail-plugin」をローカルで開発し、配布用にビルド（ZIP 化）してリリースするまでの手順をまとめたものです。
+このドキュメントでは、WP Gmail Pluginの開発環境構築から配布用ZIPファイル作成までの手順を説明します。複数のビルドツールを提供しており、環境に応じて選択できます。
 
-## 1) 前提条件
+## 概要
 
-- PHP 7.4+（推奨: 8.x）
-- WordPress 6.x（ローカル実行環境）
-- Git（任意: バージョン管理とタグ付け）
-- ZIP ユーティリティ（`zip` コマンド or OS の圧縮機能）
-- 任意: WP-CLI（`wp` コマンド）
-- 任意: Composer（サードパーティ PHP ライブラリを使う場合）
+WP Gmail Pluginは、WordPressプラグインとして配布するために、開発用ファイルを除外し、最適化されたZIPパッケージを作成する必要があります。このプロジェクトでは、以下のビルドツールを提供しています：
 
-> 備考: 本プラグインが追加ツール（npm, composer 等）に依存している場合は、プロジェクトルートの `README.md` や `composer.json` も参照してください。
+1. **Node.js ビルドツール** (`build-tool.js`) - 推奨
+2. **PowerShell ビルドツール** (`build-plugin.ps1`) - Windows環境
+3. **PHP ビルドツール** (`tools/build-zip.php`) - クロスプラットフォーム
+4. **Bash ビルドツール** (`tools/build-zip.sh`) - Unix系OS
 
-## 2) ディレクトリ構成（例）
+## システム要件
+
+### 基本要件
+- **PHP**: 7.2以上（開発・実行環境）
+- **WordPress**: 5.8以上（テスト環境）
+- **ZIP拡張**: ZIPファイル作成用
+
+### ビルドツール別要件
+- **Node.js版**: Node.js 14.0以上、npm
+- **PowerShell版**: PowerShell 5.0以上（Windows）
+- **PHP版**: PHP ZipArchive拡張
+- **Bash版**: bash、zipコマンド（macOS/Linux）
+
+## プロジェクト構成
 
 ```
 wp-gmail-plugin/
-├─ wp-gmail-plugin.php         # メインプラグインファイル（ヘッダにバージョン）
-├─ readme.txt                  # WordPress.org 互換の readme（任意）
-├─ includes/                   # PHP 機能モジュール
-├─ assets/                     # 画像・CSS・JS など
-├─ languages/                  # 翻訳ファイル（.pot/.po/.mo）
-└─ BUILD.md                    # 本ドキュメント
+├── wp-gmail-plugin.php          # メインプラグインファイル
+├── README.md                    # プロジェクト説明
+├── BUILD.md                     # ビルドガイド（本ファイル）
+├── package.json                 # Node.js依存関係
+├── uninstall.php               # アンインストール処理
+├── build-tool.js               # Node.jsビルドツール（推奨）
+├── build-plugin.ps1            # PowerShellビルドツール
+├── build-plugin.bat            # Windowsバッチファイル
+├── includes/                   # PHPクラスファイル
+├── templates/                  # テンプレートファイル
+├── assets/                     # 静的リソース
+├── languages/                  # 多言語ファイル
+├── tools/                      # 追加ビルドツール
+│   ├── build-zip.php          # PHP版ビルドツール
+│   ├── build-zip.ps1          # PowerShell版ビルドツール
+│   └── build-zip.sh           # Bash版ビルドツール
+└── dist/                       # ビルド出力（自動生成）
+    ├── wp-gmail-plugin-v*.zip  # 配布用ZIPファイル
+    └── install-info.json       # インストール情報
 ```
 
-実際の構成はプロジェクトに合わせて読み替えてください。
+## 開発環境セットアップ
 
-## 3) ローカル開発
+### ローカルWordPress環境
 
-- 既存の WordPress 環境がある場合:
-  - `wp-content/plugins/` に本プラグインディレクトリ（`wp-gmail-plugin/`）を配置
-  - 管理画面 > プラグイン で「有効化」
-- Docker で新規に用意する場合（例）:
-  - 任意の WordPress 用 Compose テンプレートを使うか、`wordpress`/`mariadb` 公式イメージで環境を起動
-  - プロジェクトフォルダを `wp-content/plugins` にマウント
+#### 既存WordPress環境を使用する場合
+1. `wp-gmail-plugin`フォルダを`wp-content/plugins/`に配置
+2. WordPress管理画面 > プラグイン で「WP Gmail Mailer」を有効化
+3. 設定 > WP Gmail Mailer で設定を行う
 
-### Gmail/Google API の設定（概要）
+#### Docker環境を使用する場合
+```bash
+# WordPress + MySQL環境の起動例
+docker-compose up -d
 
-- Google Cloud Console で「OAuth 2.0 クライアント ID」を作成
-- 対象 API として Gmail API を有効化
-- スコープは必要最小限（例: `https://www.googleapis.com/auth/gmail.send` など）
-- 認可リダイレクト URI は、プラグインのコールバック URL に合わせて登録
-- 発行された `Client ID` と `Client Secret` を本プラグインの設定画面または `.env` で管理
-
-> セキュリティ: 認証情報は `.env` や WP 設定に保存し、Git にコミットしないでください。
-
-`.env` の例（必要な場合）:
-
-```
-GOOGLE_CLIENT_ID="xxxxxxxxxx.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="xxxxxxxxxxxxxxxxxxxxxx"
-GOOGLE_REDIRECT_URI="https://example.com/wp-admin/admin.php?page=wp-gmail-plugin-callback"
+# プラグインフォルダをマウント
+# docker-compose.yml例:
+# volumes:
+#   - ./wp-gmail-plugin:/var/www/html/wp-content/plugins/wp-gmail-plugin
 ```
 
-## 4) コーディング規約・品質（任意）
+### Gmail SMTP設定
 
-- PHP_CodeSniffer + WordPress Coding Standards を推奨
-- `composer.json` にスクリプトがある場合:
+このプラグインはGmail APIではなく、Gmail SMTPを使用します：
 
-```
+1. **Googleアカウント設定**
+   - 2段階認証を有効化
+   - アプリパスワードを生成
+
+2. **WordPress設定**
+   - 管理画面 > 設定 > WP Gmail Mailer
+   - Gmailアドレスとアプリパスワードを入力
+
+> 注意: Gmail APIの設定は不要です。SMTPのみを使用します。
+
+## 開発ツール・品質管理
+
+### コーディング規約
+- WordPress Coding Standards準拠
+- PHP_CodeSniffer推奨（オプション）
+
+### 品質チェック（オプション）
+```bash
+# Composerを使用する場合
 composer install
-composer run lint
-composer run fix
+composer run lint    # 構文チェック
+composer run fix     # 自動修正
 ```
 
-- Lint/Format の導入がまだの場合は、開発ポリシーに従って追加を検討
+## ビルドツール詳細
 
-## 5) バージョン更新
+このプロジェクトでは、環境に応じて複数のビルドツールを提供しています。いずれも同様の機能を持ちますが、実行環境に応じて選択してください。
 
-- 配布前に、以下を同一の新バージョンへ更新
-  - メインプラグインファイル（例: `wp-gmail-plugin.php`）のヘッダ `Version`
-  - `readme.txt` の `Stable tag`（運用している場合）
-  - 変更点を `CHANGELOG` または `readme.txt` に追記
+### 共通機能
 
-## 6) 配布用 ZIP の作成（ビルド）
+全てのビルドツールは以下の機能を提供します：
 
-最小構成では、ソースをそのまま ZIP 化します。開発用ファイル（`.git`, `node_modules`, `tests`, `.*` など）は含めないでください。
+- **ファイル除外**: 開発用ファイル（`.git`、`node_modules`、テストファイル等）の自動除外
+- **バージョン更新**: プラグインファイル内のバージョン情報を自動更新
+- **ファイル検証**: 必須ファイルの存在確認
+- **最適化**: CSS/JavaScriptファイルの基本的な最適化（オプション）
+- **ZIPパッケージ作成**: WordPress互換の配布用ZIPファイル生成
+- **インストール情報生成**: インストール手順書の自動生成
 
-### 6.1 Bash の例（macOS/Linux/WSL）
+### 除外ファイルパターン
+
+以下のファイル・フォルダは自動的にビルドから除外されます：
+
+```
+*.log, *.tmp          # ログ・一時ファイル
+.git*, .vscode/       # バージョン管理・エディタ設定
+.idea/, .DS_Store     # IDE・システムファイル
+node_modules/         # Node.js依存関係
+dist/                 # ビルド出力フォルダ
+tests/                # テストファイル
+*.dev.*               # 開発用ファイル
+build-*.{ps1,bat,js}  # ビルドスクリプト
+package*.json         # Node.js設定ファイル
+.env*                 # 環境設定ファイル
+```
+
+## ビルドツール使用方法
+
+### 1. Node.js ビルドツール（推奨）
+
+**特徴**: 最も高機能で詳細な出力を提供
 
 ```bash
-# 作業ディレクトリの一つ上で実行する例
-cd ..
-zip -r "wp-gmail-plugin.zip" "wp-gmail-plugin" \
-  -x "*.git*" \
-  -x "*/node_modules/*" \
-  -x "*/vendor/*" \
-  -x "*.DS_Store" \
-  -x "*/.vscode/*" \
-  -x "*/.idea/*" \
-  -x "*/tests/*" \
-  -x "*/.env*"
+# 依存関係のインストール
+npm install
+
+# 基本ビルド
+npm run build
+
+# 開発ビルド（最適化なし）
+npm run build:dev
+
+# 本番ビルド（最適化あり）
+npm run build:prod
+
+# 検証のみ（ビルドしない）
+npm run validate
+
+# カスタムオプション
+node build-tool.js --version 1.2.0 --optimize --verbose
 ```
 
-### 6.2 PowerShell の例（Windows）
+**オプション**:
+- `--version`: バージョン指定
+- `--dev`: 開発モード
+- `--prod`: 本番モード
+- `--optimize`: 最適化有効
+- `--validate-only`: 検証のみ
+- `--verbose`: 詳細出力
+
+### 2. PowerShell ビルドツール（Windows）
+
+**特徴**: Windows環境に最適化、GUI統合
 
 ```powershell
-# 作業ディレクトリの一つ上で実行する例
-Set-Location ..
-$src = "wp-gmail-plugin"
-$dst = "wp-gmail-plugin.zip"
-$exclude = @(
-  "**/.git*","**/node_modules/*","**/vendor/*",
-  "**/.vscode/*","**/.idea/*","**/tests/*","**/.env*","**/.DS_Store"
-)
-if (Test-Path $dst) { Remove-Item $dst }
-Compress-Archive -Path $src -DestinationPath $dst -CompressionLevel Optimal -Force -Exclude $exclude
+# 基本実行
+.\build-plugin.ps1
+
+# バージョン指定
+.\build-plugin.ps1 -Version "1.2.0"
+
+# 詳細出力
+.\build-plugin.ps1 -Version "1.2.0" -VerboseOutput
+
+# テストスキップ
+.\build-plugin.ps1 -SkipTests
 ```
 
-> Composer を使う場合は `composer install --no-dev` を実行してから ZIP に含めるとよいです（`vendor/` を含める）。
+**特徴**:
+- Windows エクスプローラーで結果フォルダを自動オープン
+- カラー出力対応
+- PHP構文チェック（オプション）
+- ログファイル出力
 
-## 7) 動作確認チェックリスト
+### 3. PHP ビルドツール（クロスプラットフォーム）
 
-- プラグインを新規インストールして有効化できる
-- 設定画面で Google 認証が完了する
-- 期待どおりに Gmail 送信/取得などのコア機能が動作する
-- ログ/エラーが出ていない（`wp-content/debug.log` など）
-- 翻訳・表記・アクセシビリティに問題がない
+**特徴**: PHP環境のみで動作、軽量
 
-## 8) リリース手順（例）
+```bash
+# 基本実行
+php tools/build-zip.php
 
-1. 変更点を最終確認（ローカルで動作確認）
-2. バージョン更新（プラグインヘッダ、readme 等）
-3. ZIP を作成（上記手順）
-4. Git にタグ付け（例: `v1.2.3`）
-5. 配布: 
-   - 自社サイト配布なら ZIP を配布ページへアップロード
-   - WordPress.org へ公開する場合は SVN リポジトリにコミット
-6. リリース後に本番サイトで最終動作確認
+# オプション指定
+php tools/build-zip.php wp-gmail-plugin dist
+```
 
-## 9) トラブルシュート
+**引数**:
+1. プラグインディレクトリ（デフォルト: 現在のディレクトリ）
+2. 出力ディレクトリ（デフォルト: `dist`）
 
-- 「Google で承認エラー」: リダイレクト URI とスコープを再確認。テストユーザー制限が有効な場合は対象アカウントを追加。
-- 「メール送信が失敗」: PHP エラーログ、HTTP リクエストログ、リフレッシュトークンの有効性を確認。スコープに `gmail.send` が含まれているか確認。
-- 「ZIP が大きすぎる」: `node_modules/` やテスト資材、不要なアセットを除外して再作成。
+### 4. Bash ビルドツール（Unix系）
 
-## 10) よくある追加タスク（任意）
+**特徴**: Linux/macOS/WSLで軽量動作
 
-- WP-CLI コマンドの追加（バッチ送信・再認証など）
-- 自動テスト（Unit/E2E）と CI での ZIP 生成
-- 翻訳ファイル（`.pot`）の生成と更新
-- セキュリティレビュー（Nonce, Capability, エスケープ/サニタイズの徹底）
+```bash
+# 実行権限付与
+chmod +x tools/build-zip.sh
+
+# 実行
+bash tools/build-zip.sh
+```
+
+## ビルド出力
+
+### 生成されるファイル
+
+ビルドが正常に完了すると、`dist/`フォルダに以下のファイルが生成されます：
+
+```
+dist/
+├── wp-gmail-plugin-v1.2.0.zip    # 配布用ZIPファイル
+└── install-info.json             # インストール情報JSON
+```
+
+### ZIPファイルの内容
+
+生成されるZIPファイルには以下が含まれます：
+
+```
+wp-gmail-plugin/
+├── wp-gmail-plugin.php          # メインファイル（バージョン更新済み）
+├── README.md                    # プロジェクト説明
+├── uninstall.php               # アンインストール処理
+├── includes/                   # PHPクラスファイル
+├── templates/                  # テンプレートファイル
+├── assets/                     # 静的リソース（最適化済み）
+└── languages/                  # 多言語ファイル
+```
+
+## WordPress インストール手順
+
+### 1. ZIPファイルからのインストール
+
+1. ビルドで生成された`wp-gmail-plugin-v*.zip`をダウンロード
+2. WordPress管理画面 > プラグイン > 新規追加
+3. 「プラグインのアップロード」をクリック
+4. ZIPファイルを選択して「今すぐインストール」
+5. インストール完了後「有効化」をクリック
+
+### 2. 手動インストール
+
+1. ZIPファイルを解凍
+2. `wp-gmail-plugin`フォルダを`wp-content/plugins/`にアップロード
+3. WordPress管理画面 > プラグイン で有効化
+
+### 3. 初期設定
+
+1. 管理画面 > 設定 > WP Gmail Mailer
+2. Gmailアドレスとアプリパスワードを設定
+3. 「変更を保存」で設定を保存（自動検証実行）
+4. テストメール送信で動作確認
+
+## 品質チェックリスト
+
+### ビルド前チェック
+
+- [ ] プラグインバージョンの確認・更新
+- [ ] 必須ファイルの存在確認
+- [ ] PHP構文エラーがないことを確認
+- [ ] 翻訳ファイル（.mo）の生成
+- [ ] 変更履歴の更新
+
+### ビルド後チェック
+
+- [ ] ZIPファイルの生成確認
+- [ ] ファイルサイズの確認（適切な範囲内）
+- [ ] 不要ファイルが除外されていることを確認
+- [ ] install-info.jsonの内容確認
+
+### インストールテスト
+
+- [ ] 新規WordPressサイトでのインストール
+- [ ] プラグインの有効化
+- [ ] 設定画面の表示・操作
+- [ ] SMTP接続テスト
+- [ ] メール送信テスト
+- [ ] ログ機能の動作確認
+- [ ] 多言語表示の確認（該当する場合）
+
+## トラブルシューティング
+
+### ビルドエラー
+
+**「必須ファイルが見つからない」**
+- ファイル構成を確認
+- パスの大文字・小文字を確認
+
+**「ZIPファイル作成に失敗」**
+- ディスク容量を確認
+- 書き込み権限を確認
+- ファイルロックの解除
+
+**「PHP構文エラー」**
+- PHP構文チェッカーで確認
+- 使用しているPHPバージョンとの互換性確認
+
+### インストールエラー
+
+**「プラグインが認識されない」**
+- ZIPファイル内のフォルダ構造を確認
+- メインファイル（wp-gmail-plugin.php）の存在確認
+
+**「SMTP接続エラー」**
+- Googleアプリパスワードの確認
+- 2段階認証の有効化確認
+- ネットワーク・ファイアウォール設定確認
+
+## リリース管理
+
+### バージョン管理
+
+1. 機能追加・修正の完了
+2. バージョン番号の決定（セマンティックバージョニング）
+3. プラグインファイル内のバージョン更新
+4. CHANGELOG/README.mdの更新
+5. Git タグの作成
+
+### リリース手順
+
+1. **開発完了・テスト**
+   ```bash
+   # 品質チェック
+   npm run validate
+   ```
+
+2. **ビルド実行**
+   ```bash
+   # 本番ビルド
+   npm run build:prod
+   ```
+
+3. **配布**
+   - 自社サイト: ZIPファイルをアップロード
+   - WordPress.org: SVNリポジトリにコミット
+   - GitHub: Releaseページで公開
+
+4. **リリース後確認**
+   - 本番環境での動作テスト
+   - ユーザーフィードバックの監視
+
+## 継続的改善
+
+### 推奨する追加機能
+
+- CI/CDパイプライン（GitHub Actions等）
+- 自動テスト（PHPUnit、E2Eテスト）
+- コード品質チェック（PHPCS、PHPMD）
+- セキュリティスキャン
+- 翻訳管理ツール連携
+
+### 監視・メンテナンス
+
+- WordPress/PHP新バージョンとの互換性確認
+- セキュリティアップデート対応
+- ユーザーフィードバックに基づく改善
+- パフォーマンス最適化
 
 ---
 
-本ドキュメントはテンプレート的な内容を含みます。プロジェクトに合わせてコマンド・手順・除外パターンを調整してください。必要であれば、あなたの運用に合わせてさらに具体化します。
+このビルドガイドは、WP Gmail Pluginの開発・配布プロセスを効率化し、品質を保つためのものです。環境や要件に応じてカスタマイズしてください。

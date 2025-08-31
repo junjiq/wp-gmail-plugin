@@ -1,0 +1,21 @@
+{
+  "build_date": "2025-09-01 02:05:59",
+  "wordpress_version_required": "5.0",
+  "plugin_name": "WP Gmail Plugin",
+  "configuration_required": {
+    "gmail_api": "Enable Gmail API",
+    "google_cloud_console": "Create OAuth 2.0 credentials",
+    "redirect_uri": "Add redirect URI to Google Cloud Console"
+  },
+  "version": "1.2.0",
+  "installation_steps": [
+    "1. Download the ZIP file",
+    "2. Go to WordPress Admin → Plugins → Add New",
+    "3. Click 'Upload Plugin'",
+    "4. Choose the ZIP file and click 'Install Now'",
+    "5. Activate the plugin",
+    "6. Go to Gmail → Settings to configure API credentials"
+  ],
+  "php_version_required": "7.4",
+  "file_name": "wp-gmail-plugin-v1.2.0.zip"
+}
