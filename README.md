@@ -41,12 +41,12 @@ wp-gmail-plugin/
 ├── BUILD.md                     # ビルド手順書
 ├── uninstall.php               # アンインストール処理
 ├── package.json                # Node.js依存関係
-├── includes/                   # PHPクラスファイル
+├── includes/                   # PHPクラスファイル - 将来の拡張用
 │   ├── class-gmail-api-client.php      # Gmail API クライアント
 │   ├── class-gmail-oauth.php           # OAuth認証処理
 │   ├── class-gmail-email-manager.php   # メール管理
 │   └── functions.php                   # 共通関数
-├── templates/                  # テンプレートファイル
+├── templates/                  # テンプレートファイル - 将来の拡張用
 │   ├── admin-main.php          # 管理画面メイン
 │   ├── admin-settings.php      # 設定画面
 │   ├── admin-inbox.php         # 受信箱表示
@@ -67,10 +67,6 @@ wp-gmail-plugin/
 │   ├── wp-gmail-plugin.pot     # 翻訳テンプレート
 │   ├── en_US.po               # 英語翻訳
 │   └── ja_JP.po               # 日本語翻訳
-├── tools/                      # ビルドツール（プロジェクトルート）
-│   ├── build-zip.php          # PHP版ビルドツール
-│   ├── build-zip.ps1          # PowerShell版ビルドツール
-│   └── build-zip.sh           # Bash版ビルドツール
 ├── build-plugin.ps1           # PowerShellビルドスクリプト
 ├── build-plugin.bat           # Windowsバッチファイル
 ├── build-tool.js              # Node.jsビルドツール
