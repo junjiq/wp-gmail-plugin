@@ -64,7 +64,12 @@ final class WPGP_Plugin {
     public function sanitize($in) {
         $o = $this->opts(); $out = [];
         $out['gmail_user'] = isset($in['gmail_user']) ? sanitize_email($in['gmail_user']) : $o['gmail_user'];
-        $out['gmail_pass'] = (isset($in['gmail_pass']) && $in['gmail_pass']!=='') ? (string)$in['gmail_pass'] : $o['gmail_pass'];
+        // パスワードの暗号化処理
+        if (isset($in['gmail_pass']) && $in['gmail_pass'] !== '') {
+            $out['gmail_pass'] = $this->encrypt_password((string)$in['gmail_pass']);
+        } else {
+            $out['gmail_pass'] = $o['gmail_pass']; // 既存の暗号化済みパスワードを保持
+        }
         $out['from_email'] = isset($in['from_email']) ? sanitize_email($in['from_email']) : $o['from_email'];
         $out['from_name']  = isset($in['from_name'])  ? sanitize_text_field($in['from_name']) : $o['from_name'];
         $enc = isset($in['encryption']) ? strtolower(sanitize_text_field($in['encryption'])) : $o['encryption'];
@@ -82,7 +87,10 @@ final class WPGP_Plugin {
         $changed = false; foreach ($keys as $k) { if ((string)$out[$k] !== (string)$o[$k]) { $changed = true; break; } }
         if ($changed && $out['gmail_user'] && $out['gmail_pass']) {
             $err = '';
-            if (!$this->validate_smtp($out, $err)) {
+            // 検証用に一時的に復号化
+            $temp_opt = $out;
+            $temp_opt['gmail_pass'] = $this->decrypt_password($out['gmail_pass']);
+            if (!$this->validate_smtp($temp_opt, $err)) {
                 add_settings_error('wpgp_settings_group', 'wpgp_validate_error', sprintf(__('Gmail 接続検証に失敗しました: %s', 'wp-gmail-mailer'), $err), 'error');
                 set_transient('wpgp_reset_fields', 1, MINUTE_IN_SECONDS * 5);
                 // 変更破棄
@@ -95,14 +103,29 @@ final class WPGP_Plugin {
         if (!current_user_can('manage_options')) return; $o = $this->opts();
         $test = '';
         if (isset($_POST['wpgp_test_send']) && check_admin_referer('wpgp_test_send')) {
-            $to = isset($_POST['wpgp_test_to']) ? sanitize_email(wp_unslash($_POST['wpgp_test_to'])) : '';
-            if ($to) {
-                $ok = wp_mail($to, __('WP Gmail Mailer テスト送信', 'wp-gmail-mailer'), __('このメールは WP Gmail Mailer からのテストです。', 'wp-gmail-mailer'));
-                if (is_wp_error($ok)) $test = '<div class="notice notice-error"><p>'.sprintf(__('送信エラー: %s', 'wp-gmail-mailer'), esc_html($ok->get_error_message())).'</p></div>';
-                elseif ($ok) $test = '<div class="notice notice-success"><p>'.esc_html__('テストメールを送信しました。', 'wp-gmail-mailer').'</p></div>';
-                else $test = '<div class="notice notice-error"><p>'.esc_html__('送信に失敗しました。', 'wp-gmail-mailer').'</p></div>';
+            // レート制限チェック（10分間に3回まで）
+            $rate_limit_key = 'wpgp_test_email_' . get_current_user_id();
+            $attempts = get_transient($rate_limit_key);
+
+            if ($attempts === false) {
+                $attempts = 0;
+            }
+
+            if ($attempts >= 3) {
+                $test = '<div class="notice notice-error"><p>'.esc_html__('テストメールの送信制限に達しました。10分後に再試行してください。', 'wp-gmail-mailer').'</p></div>';
             } else {
-                $test = '<div class="notice notice-warning"><p>'.esc_html__('テスト送信先のメールアドレスを入力してください。', 'wp-gmail-mailer').'</p></div>';
+                $to = isset($_POST['wpgp_test_to']) ? sanitize_email(wp_unslash($_POST['wpgp_test_to'])) : '';
+                if ($to) {
+                    // 送信試行をカウント
+                    set_transient($rate_limit_key, $attempts + 1, 600); // 10分間
+
+                    $ok = wp_mail($to, __('WP Gmail Mailer テスト送信', 'wp-gmail-mailer'), __('このメールは WP Gmail Mailer からのテストです。', 'wp-gmail-mailer'));
+                    if (is_wp_error($ok)) $test = '<div class="notice notice-error"><p>'.sprintf(__('送信エラー: %s', 'wp-gmail-mailer'), esc_html($ok->get_error_message())).'</p></div>';
+                    elseif ($ok) $test = '<div class="notice notice-success"><p>'.esc_html__('テストメールを送信しました。', 'wp-gmail-mailer').'</p></div>';
+                    else $test = '<div class="notice notice-error"><p>'.esc_html__('送信に失敗しました。', 'wp-gmail-mailer').'</p></div>';
+                } else {
+                    $test = '<div class="notice notice-warning"><p>'.esc_html__('テスト送信先のメールアドレスを入力してください。', 'wp-gmail-mailer').'</p></div>';
+                }
             }
         }
         ?>
@@ -113,7 +136,10 @@ final class WPGP_Plugin {
             <?php if (get_transient('wpgp_reset_fields')): delete_transient('wpgp_reset_fields'); $o['gmail_user']=''; $o['from_email']=''; ?>
                 <div class="notice notice-warning"><p><?php echo esc_html__('認証に失敗したため、入力をリセットしました。正しい情報を再入力してください。', 'wp-gmail-mailer'); ?></p></div>
             <?php endif; ?>
-            <?php echo $test; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+            <?php
+            // $test変数は既に適切にエスケープされたHTML文字列なので、wp_kses_postで安全に出力
+            echo wp_kses_post($test);
+            ?>
             <form method="post" action="options.php">
                 <?php settings_fields('wpgp_settings_group'); $o=$this->opts(); ?>
                 <table class="form-table" role="presentation">
@@ -206,7 +232,7 @@ final class WPGP_Plugin {
                 require_once ABSPATH.WPINC.'/PHPMailer/Exception.php';
             }
             $m=new PHPMailer\PHPMailer\PHPMailer(true);
-            $m->isSMTP(); $m->Host='smtp.gmail.com'; $m->SMTPAuth=true; $m->Username=$o['gmail_user']; $m->Password=$o['gmail_pass'];
+            $m->isSMTP(); $m->Host='smtp.gmail.com'; $m->SMTPAuth=true; $m->Username=$o['gmail_user']; $m->Password=$this->decrypt_password($o['gmail_pass']);
             $m->SMTPSecure = ($o['encryption']==='ssl') ? PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS : PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
             $m->Port = ($o['port']>0)?intval($o['port']):(($o['encryption']==='ssl')?465:587); $m->CharSet=$charset;
             $m->setFrom($from_email,$from_name,false); $m->Sender=$o['gmail_user'];
@@ -224,12 +250,34 @@ final class WPGP_Plugin {
             $this->log('info',__('メール送信に成功','wp-gmail-mailer'),['to'=>$to,'subject'=>$subject]);
             return true;
         } catch (\Exception $e) {
-            $this->log('error',sprintf(__('送信エラー: %s','wp-gmail-mailer'), $e->getMessage()),['to'=>$to,'subject'=>$subject]); $this->notice(sprintf(__('送信エラー: %s','wp-gmail-mailer'), $e->getMessage()));
-            return new WP_Error('wpgp_exception',sprintf(__('送信エラー: %s','wp-gmail-mailer'), $e->getMessage()));
+            // エラーメッセージをサニタイズして情報漏洩を防ぐ
+            $error_msg = WP_DEBUG ? $e->getMessage() : __('メール送信中にエラーが発生しました。', 'wp-gmail-mailer');
+            $this->log('error', sprintf(__('送信エラー: %s','wp-gmail-mailer'), $e->getMessage()), ['to'=>$to,'subject'=>$subject]);
+            $this->notice($error_msg);
+            return new WP_Error('wpgp_exception', $error_msg);
         } catch (\Throwable $t) {
-            $this->log('error',sprintf(__('送信エラー: %s','wp-gmail-mailer'), $t->getMessage()),['to'=>$to,'subject'=>$subject]); $this->notice(sprintf(__('送信エラー: %s','wp-gmail-mailer'), $t->getMessage()));
-            return new WP_Error('wpgp_throwable',sprintf(__('送信エラー: %s','wp-gmail-mailer'), $t->getMessage()));
+            // エラーメッセージをサニタイズして情報漏洩を防ぐ
+            $error_msg = WP_DEBUG ? $t->getMessage() : __('メール送信中にエラーが発生しました。', 'wp-gmail-mailer');
+            $this->log('error', sprintf(__('送信エラー: %s','wp-gmail-mailer'), $t->getMessage()), ['to'=>$to,'subject'=>$subject]);
+            $this->notice($error_msg);
+            return new WP_Error('wpgp_throwable', $error_msg);
         }
+    }
+
+    // ===== Security: Password Encryption =====
+    private function encrypt_password($password) {
+        if (empty($password)) return '';
+        $key = wp_salt('auth');
+        $iv = substr(hash('sha256', wp_salt('secure_auth')), 0, 16);
+        return base64_encode(openssl_encrypt($password, 'AES-256-CBC', $key, 0, $iv));
+    }
+
+    private function decrypt_password($encrypted) {
+        if (empty($encrypted)) return '';
+        $key = wp_salt('auth');
+        $iv = substr(hash('sha256', wp_salt('secure_auth')), 0, 16);
+        $decrypted = openssl_decrypt(base64_decode($encrypted), 'AES-256-CBC', $key, 0, $iv);
+        return $decrypted !== false ? $decrypted : '';
     }
 
     // ===== Helpers =====
@@ -245,7 +293,7 @@ final class WPGP_Plugin {
             $m->Host = 'smtp.gmail.com';
             $m->SMTPAuth = true;
             $m->Username = $opt['gmail_user'];
-            $m->Password = $opt['gmail_pass'];
+            $m->Password = $opt['gmail_pass']; // validate_smtp内では既に復号化済みを受け取る
             $m->SMTPSecure = ($opt['encryption']==='ssl') ? PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS : PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
             $m->Port = intval($opt['port'])>0 ? intval($opt['port']) : (($opt['encryption']==='ssl')?465:587);
             $m->Timeout = 10;
@@ -263,7 +311,42 @@ final class WPGP_Plugin {
     private function parse_one($s){ if(preg_match('/^(.+)<([^>]+)>$/',$s,$m)){ return ['email'=>sanitize_email(trim($m[2])),'name'=>trim($m[1]," \"'")]; } return ['email'=>sanitize_email(trim($s)),'name'=>'']; }
 
     // ===== Logging / Notices =====
-    private function log_path(){ $o=$this->opts(); if(empty($o['logging_enabled'])) return ''; $u=wp_upload_dir(); if(!empty($u['error'])) return ''; $d=trailingslashit($u['basedir']).'wpgp-logs'; if(!file_exists($d)) wp_mkdir_p($d); $f=trailingslashit($d).'wpgp-mail.log'; $rd=max(0,intval($o['log_retain_days'])); $mx=max(32,intval($o['log_max_size_kb']))*1024; if(file_exists($f)){ if($rd>0 && (time()-filemtime($f))>($rd*DAY_IN_SECONDS)) @unlink($f); elseif(filesize($f)>$mx) @rename($f,$f.'.1'); } return $f; }
+    private function log_path(){
+        $o=$this->opts();
+        if(empty($o['logging_enabled'])) return '';
+        $u=wp_upload_dir();
+        if(!empty($u['error'])) return '';
+        $d=trailingslashit($u['basedir']).'wpgp-logs';
+        if(!file_exists($d)) {
+            wp_mkdir_p($d);
+            // .htaccessファイルを作成してログディレクトリへの直接アクセスを防ぐ
+            $htaccess = trailingslashit($d).'.htaccess';
+            if (!file_exists($htaccess)) {
+                $content = "# Deny direct access to log files\n";
+                $content .= "Order Allow,Deny\n";
+                $content .= "Deny from all\n";
+                $content .= "\n";
+                $content .= "# Alternative for Apache 2.4+\n";
+                $content .= "<IfModule mod_authz_core.c>\n";
+                $content .= "    Require all denied\n";
+                $content .= "</IfModule>\n";
+                @file_put_contents($htaccess, $content);
+            }
+            // index.phpファイルも作成（念のため）
+            $index = trailingslashit($d).'index.php';
+            if (!file_exists($index)) {
+                @file_put_contents($index, '<?php // Silence is golden');
+            }
+        }
+        $f=trailingslashit($d).'wpgp-mail.log';
+        $rd=max(0,intval($o['log_retain_days']));
+        $mx=max(32,intval($o['log_max_size_kb']))*1024;
+        if(file_exists($f)){
+            if($rd>0 && (time()-filemtime($f))>($rd*DAY_IN_SECONDS)) @unlink($f);
+            elseif(filesize($f)>$mx) @rename($f,$f.'.1');
+        }
+        return $f;
+    }
     private function log($level,$msg,$ctx=[]){ $o=$this->opts(); if(empty($o['logging_enabled'])) return; $f=$this->log_path(); if(!$f) return; $date=gmdate('Y-m-d H:i:s'); $line=sprintf('[%s] %s: %s',$date,strtoupper($level),$msg); if($ctx){ $s=$ctx; if(isset($s['to'])){ if(is_array($s['to'])) $s['to']=implode(',',array_map(function($x){return is_array($x)?($x['email']??''):(string)$x;},$s['to'])); else $s['to']=(string)$s['to']; } if(isset($s['subject'])) $s['subject']=(string)$s['subject']; $line.=' | '.wp_json_encode($s);} @file_put_contents($f,$line."\n",FILE_APPEND|LOCK_EX); }
     private function tail($file,$lines=200){ if(!file_exists($file)) return ''; $h=@fopen($file,'r'); if(!$h) return ''; $buf='';$pos=-1;$cnt=0;$st=fstat($h);$sz=$st['size']; while($cnt<$lines && -$pos<=$sz){ fseek($h,$pos,SEEK_END); $c=fgetc($h); if($c==="\n"){ $cnt++; if($cnt>1)$buf=$c.$buf; } else { $buf=$c.$buf; } $pos--; } fclose($h); return trim($buf);}    
     private function notice($msg){ $o=$this->opts(); if(empty($o['notify_admin'])) return; set_transient(self::TRANSIENT_ERROR_NOTICE,(string)$msg,HOUR_IN_SECONDS); }
